@@ -1,0 +1,46 @@
+---
+# tasks file for logentries
+
+- name: Check account_key is set
+  fail: msg="You must define logentries_account_key"
+  when: logentries_account_key is not defined
+
+- name: Ensure repository is configured
+  apt_repository: repo="{{ logentries_repo }}" state=present
+
+- name: Check for GPG key
+  command: apt-key list
+  register: keylist
+
+- name: Ensure repository GPG key exists
+  shell: gpg --keyserver pgp.mit.edu --recv-keys C43C79AD && gpg -a --export C43C79AD | sudo apt-key add -
+  when: '"C43C79AD" not in keylist.stdout'
+  sudo: false
+
+- name: Ensure logentries packages are installed
+  apt: update_cache=yes name={{ item }}
+  with_items:
+    - python-setproctitle
+    - logentries
+
+- name: Ensure logentries agent is registered with service
+  command: le register --account-key={{ logentries_account_key }} --name={{ inventory_hostname }} --hostname={{ inventory_hostname }}
+           creates=/etc/le/config
+  notify:
+    - Restart LogEntries
+
+- name: Check for logentries configuration
+  stat: path=/etc/le/config
+  register: le
+
+- name: Ensure nodejs log goes to logentries
+  logentries: path={{ routing_service_log_path }}
+              state=present
+  when: le.stat.exists
+
+
+- name: Ensure logentries-daemon is installed
+  apt: name=logentries-daemon state=latest
+
+- name: Ensure logentries service is running
+  service: name=logentries state=started enabled=yes

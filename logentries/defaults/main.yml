@@ -1,0 +1,4 @@
+---
+# defaults file for logentries
+
+logentries_repo: 'deb http://rep.logentries.com/ precise main'

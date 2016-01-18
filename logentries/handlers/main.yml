@@ -1,0 +1,6 @@
+---
+# handlers file for logentries
+- name: Restart LogEntries
+  service:
+    name: logentries
+    state: restarted
