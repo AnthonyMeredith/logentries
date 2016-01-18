@@ -1,0 +1,10 @@
+---
+- hosts: webserver
+  remote_user: anthony
+  sudo: True
+
+  roles:
+    - apache2
+    - mysql
+    - php5
+    - drupal_7
